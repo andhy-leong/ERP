@@ -1,0 +1,89 @@
+:root {
+    /* base colors */
+    --base-900: #1A202C;
+    --base-800: #2D3648;
+    --base-700: #4A5568;
+    --base-600: #718096;
+    --base-500: #A0AEC0;
+    --base-400: #CBD5E0;
+    --base-300: #E2E8F0;
+    --base-200: #EDF2F7;
+    --base-100: #F7FAFC;
+    --base-white: #FFFFFF;
+
+    /* accent colors */
+    --accent-yellow: #FFD43A;
+    --accent-red: #DA1E28;
+    --accent-green: #25A249;
+    --accent-blue: #34AFF7;
+    --accent-purple: #F134F7;
+    --accent-orange: #FE9D35;
+    --accent-yellow-light: #FFEDAD;
+    --accent-red-light: #FFB8B8;
+    --accent-green-light: #D1FFD9;
+    --accent-blue-light: #B0DCFF;
+    --accent-purple-light: #F6D1FF;
+    --accent-orange-light: #FED7AD;
+
+    --primary-color: var(--base-white);
+}
+
+:root {
+    --color-background: var(--base-white);
+}
+
+main {
+    padding: 10px;
+}
+
+body {
+    font-family: "Inter", sans-serif;
+    margin: 0;
+    padding: 0;
+    font-weight: bold;
+}
+
+* {
+    color: var(--base-900);
+}
+
+p {
+    font-size: 12px;
+}
+
+h2 {
+    font-size: 16px;
+}
+
+button {
+    background-color: var(--base-800);
+    color: white;
+    padding: 8px;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+    border-radius: 5px;
+    font-size: 16px;
+}
+
+label {
+    font-size: 14px;
+    font-weight: bold;
+}
+
+input {
+    padding: 6px;
+    width: 100%;
+    background-color: var(--primary-color);
+    border: 1px solid var(--base-400);
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+div > div {
+    border-radius: 15px;
+}
+
+div > div > div{
+    border-radius: 0;
+}

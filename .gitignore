@@ -1,0 +1,61 @@
+# Node.js
+node_modules/
+
+# Logs files
+logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build output
+dist/
+*.local
+
+# Editor directories and files
+.idea/
+.vscode/
+*.swp
+*.swo
+*.swn
+*.bak
+*.tmp
+
+# Mac OS
+.DS_Store
+
+# Dependency directories
+/node_modules/
+/package-lock.json
+/yarn.lock
+
+# TypeScript
+tsconfig.tsbuildinfo
+tsconfig.node.json
+
+# Vue-specific
+.vuepress/dist
+.vuepress/public
+#/public
+
+# Cache
+/.cache
+/.nuxt
+/.output
+
+# Git & IDE config
+*.sublime-workspace
+*.sublime-project
+/.history
+/.DS_Store
+.idea
+.vscode
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+/.env.local
+/.env.*
+.env
