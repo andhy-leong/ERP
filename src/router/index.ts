@@ -1,10 +1,6 @@
 import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router';
-import HomePage from '@/views/HomePage.vue';
-import AboutPage from '@/views/AboutPage.vue';
 import ConnexionComponent from "@/components/ConnexionComponent.vue";
 import GridPage from '@/views/GridPage.vue';
-import PompesView from "@/views/PompesView.vue";
-import EmpGerantComponent from '@/components/EmpGerantComponent.vue';
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -16,6 +12,7 @@ const routes: Array<RouteRecordRaw> = [
     path: '/grid',
     name: 'Grid',
     component: GridPage,
+    props: { mode: 'caissier' },
     beforeEnter: (to, from, next) => {
       if (localStorage.getItem('user')) {
         next();
@@ -23,10 +20,12 @@ const routes: Array<RouteRecordRaw> = [
         next({ name: 'Connexion' });
       }
     }
-  },{
+  },
+  {
     path: '/gerant',
     name: 'Gerant',
     component: GridPage,
+    props: { mode: 'gerant' },
     beforeEnter: (to, from, next) => {
       if (localStorage.getItem('user')) {
         next();
@@ -34,6 +33,10 @@ const routes: Array<RouteRecordRaw> = [
         next({ name: 'Connexion' });
       }
     }
+  },
+  {
+    path: '/:pathMatch(.*)*',
+    redirect: '/'
   }
 ];
 

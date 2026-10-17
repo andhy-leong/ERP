@@ -1,18 +1,24 @@
 <template>
   <GridItem>
-    <div class="stocks">
-      <h2 @click="$emit('page-extend-stock')">Stocks</h2>
-      <div class="produits-list">
-        <p v-if="loading" class="stock-center-message">Chargement...</p>
-        <p v-if="error" class="error stock-center-message">{{ error }}</p>
-        <div v-for="(produit, index) in listeProduit" :key="index" class="produit">
-          <div class="produit-header">
-            <div :class="['etat', getEtatClass(produit)]"></div>
+    <div class="stocks-widget">
+      <div class="stocks-header" @click="$emit('page-extend-stock')">
+        <div class="s-head-left">
+          <span class="icon">📦</span>
+          <h3>Stocks & Niveaux</h3>
+        </div>
+        <span class="expand-tag">Détails ⤢</span>
+      </div>
+
+      <div class="produits-list" @click="$emit('page-extend-stock')">
+        <p v-if="loading" class="stock-center-message">Chargement des stocks...</p>
+        <div v-else v-for="produit in listeProduit" :key="produit.idProduit" class="produit-row">
+          <div class="produit-meta">
+            <span :class="['dot-etat', getEtatClass(produit)]"></span>
             <span class="produit-name">{{ produit.nomProduit }}</span>
           </div>
-          <div class="produit-status">
-            <span>Stock: {{ produit.qteEnStock }}{{ produit.unite !== 'unite' ? ' ' + produit.unite : '' }}</span>
-          </div>
+          <span class="produit-qty">
+            {{ produit.qteEnStock }} {{ produit.unite }}
+          </span>
         </div>
       </div>
     </div>
@@ -20,123 +26,133 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, defineEmits } from 'vue';
 import GridItem from "@/components/GridItem.vue";
+import { fetchProduits } from "@/services/erpService";
+
+defineEmits(['page-extend-stock']);
 
 const listeProduit = ref([]);
 const loading = ref(true);
-const error = ref(null);
 
 const getEtatClass = (produit) => {
-  if (produit.unite === 'unite') {
-    if (produit.qteEnStock <= 0) return "rupture";
-    if (produit.qteEnStock < 5) return "quantite-faible";
-    return "disponible";
-  } else if (produit.unite === 'litre') {
-    if (produit.qteEnStock <= 0) return "rupture";
-    if (produit.qteEnStock < 50) return "quantite-faible";
-    return "disponible";
-  } else if (produit.unite === 'kg') {
-    if (produit.qteEnStock <= 0) return "rupture";
-    if (produit.qteEnStock < 10) return "quantite-faible";
-    return "disponible";
-  }
-  // Pour les autres unités, on utilise la même logique que pour les unités
-  if (produit.qteEnStock <= 0) return "rupture";
-  if (produit.qteEnStock < 5) return "quantite-faible";
+  if (produit.qteEnStock <= produit.seuilCritique) return "rupture";
+  if (produit.qteEnStock <= produit.seuilCritique * 1.5) return "quantite-faible";
   return "disponible";
 };
 
 onMounted(async () => {
   try {
-    const response = await fetch("https://linserv-info-01/~pk203743/S401/fetchProduits.php");
-    listeProduit.value = await response.json();
-    console.log(listeProduit.value);
+    listeProduit.value = await fetchProduits();
   } catch (err) {
-    error.value = err.message;
+    console.error("Erreur chargement stocks", err);
   } finally {
     loading.value = false;
   }
 });
 </script>
 
-<style>
-.stocks {
+<style scoped>
+.stocks-widget {
   display: flex;
   flex-direction: column;
-  gap: 10px;
   height: 100%;
-  padding: 0 10px;
+  background: #ffffff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
-.stocks label {
-  margin-top: 10px;
-  margin-left: 10px;
-  font-weight: bold;
-}
-
-.stocks .produits-list {
+.stocks-header {
   display: flex;
-  flex-direction: column;
-  gap: 10px;
-  overflow-y: auto;
-  flex-grow: 1;
-  max-height: 100%;
-  height: 0;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  cursor: pointer;
 }
 
-.stocks .produit {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 5px;
-  padding: 10px;
-  border: 2px solid var(--base-400);
-  border-radius: 8px;
-  background-color: var(--primary-color);
-  margin-top: 2px;
-}
-
-.stocks .produit-header {
+.s-head-left {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 6px;
 }
 
-.stocks .produit-name {
-  font-weight: bold;
-  font-size: 16px;
+.s-head-left h3 {
+  margin: 0;
+  font-size: 13px;
+  color: #1e293b;
+  font-weight: 700;
 }
 
-.stocks .produit-status {
+.expand-tag {
+  font-size: 10px;
+  color: #2563eb;
+  background: #dbeafe;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.produits-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.produit-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 8px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+}
+
+.produit-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.produit-name {
   font-size: 12px;
+  font-weight: 600;
+  color: #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.stocks .etat {
-  width: 15px;
-  height: 15px;
+.produit-qty {
+  font-size: 11px;
+  font-weight: 700;
+  color: #475569;
+  white-space: nowrap;
+}
+
+.dot-etat {
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
-  background-color: var(--primary-color);
+  flex-shrink: 0;
 }
 
-.stocks .etat.disponible {
-  background-color: var(--accent-green);
-}
-
-.stocks .etat.quantite-faible {
-  background-color: var(--accent-orange);
-}
-
-.stocks .etat.rupture {
-  background-color: var(--accent-red);
-}
+.dot-etat.disponible { background-color: #22c55e; }
+.dot-etat.quantite-faible { background-color: #f59e0b; }
+.dot-etat.rupture { background-color: #ef4444; }
 
 .stock-center-message {
   text-align: center;
-  margin-top: 20px;
-}
-
-.error {
-  color: red;
+  font-size: 11px;
+  color: #64748b;
+  padding: 10px;
 }
 </style>

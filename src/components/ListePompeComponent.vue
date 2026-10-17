@@ -1,157 +1,172 @@
 <template>
   <GridItem>
-    <div class="liste-pompe" @click="$emit('aggrandir-pompe')">
-      <div v-for="(pompe, index) in listeProduit" :key="index" class="pompe">
-        <div class="pompe-header">
-          <div :class="['etat', getEtatClass(pompe)]"></div>
-          <h3>{{ pompe.nomPompe }}</h3>
+    <div class="liste-pompe-widget">
+      <div class="widget-top" @click="$emit('aggrandir-pompe')">
+        <div class="widget-title">
+          <span class="p-icon">⛽</span>
+          <h3>Pompes & Bornes</h3>
         </div>
+        <span class="btn-expand-badge">Agrandir ⤢</span>
+      </div>
 
-        <div class="carburant">
-          <template v-if="pompe.enFonction && pompe.enUtilisation">
-            <div class="utilisation">
-              <span>{{ pompe.carburantUtilise }}</span>
-              <span>Prix total: {{ calculerPrix(pompe.carburantUtilise) }}€</span>
-            </div>
-          </template>
-          <template v-else>
-            <ul>
-              <li v-for="carburant in pompe.listeCarburantDisponible" :key="carburant">
-                {{ carburant }}
-              </li>
-            </ul>
-          </template>
-        </div>
-
-        <button v-show="pompe.enFonction"
-            :class="getButtonClass(pompe)"
-            @click="gererPompe(pompe)"
+      <div class="pompes-strip" @click="$emit('aggrandir-pompe')">
+        <div 
+          v-for="pompe in pompes" 
+          :key="pompe.id" 
+          class="pompe-mini-pill"
+          :class="pompe.status"
         >
-          {{ getButtonText(pompe) }}
-        </button>
+          <div class="pill-top">
+            <span class="dot" :class="pompe.status"></span>
+            <strong>P{{ pompe.numero }}</strong>
+          </div>
+
+          <div class="pill-status-text">
+            <template v-if="pompe.status === 'in-use'">
+              <span class="txt-use">En cours</span>
+              <small>{{ pompe.details?.quantite || '0' }}L</small>
+            </template>
+            <template v-else-if="pompe.status === 'waiting-payment'">
+              <span class="txt-pay">À payer</span>
+              <small>{{ pompe.details?.montant || '0' }}€</small>
+            </template>
+            <template v-else-if="pompe.status === 'incident'">
+              <span class="txt-incident">Incident</span>
+            </template>
+            <template v-else>
+              <span class="txt-dispo">Dispo</span>
+            </template>
+          </div>
+        </div>
       </div>
     </div>
   </GridItem>
 </template>
 
-<script>
+<script setup lang="ts">
+import { ref, onMounted } from "vue";
 import GridItem from "@/components/GridItem.vue";
+import { fetchPompes } from "@/services/erpService";
+import { PompeData } from "@/data/mockDatabase";
 
-export default {
-  components: { GridItem },
-  data() {
-    return {
-      listeProduit: [
-        { nomPompe: "Pompe 1", listeCarburantDisponible: ["SP-95", "Ethanol", "Kérozène"], enFonction: true, enUtilisation: false, carburantUtilise: null },
-        { nomPompe: "Pompe 2", listeCarburantDisponible: ["Électricité"], enFonction: false, enUtilisation: false, carburantUtilise: null },
-        { nomPompe: "Pompe 3", listeCarburantDisponible: ["SP-95", "Ethanol", "Kérozène"], enFonction: true, enUtilisation: true, carburantUtilise: "SP-95" },
-        { nomPompe: "Pompe 4", listeCarburantDisponible: ["SP-95", "Ethanol", "Kérozène"], enFonction: true, enUtilisation: false, carburantUtilise: null },
-        { nomPompe: "Pompe 5", listeCarburantDisponible: ["SP-95", "Ethanol", "Kérozène"], enFonction: false, enUtilisation: false, carburantUtilise: null },
-        { nomPompe: "Pompe 6", listeCarburantDisponible: ["SP-95", "Ethanol", "Kérozène"], enFonction: false, enUtilisation: false, carburantUtilise: null }
-      ]
-    };
-  },
-  methods: {
-    getButtonText(pompe) {
-      return pompe.enUtilisation ? "Arrêter" : "Payer";
-    },
-    getButtonClass(pompe) {
-      return pompe.enUtilisation ? "arreter" : "payer";
-    },
-    gererPompe(pompe) {
-      console.log(`Action sur la pompe: ${pompe.nomPompe}`);
-    },
-    calculerPrix(carburant) {
-      const prixCarburants = { "SP-95": 1.80, "Ethanol": 0.90, "Kérozène": 3.00, "Électricité": 0.25 };
-      return prixCarburants[carburant] ? (prixCarburants[carburant] * 50).toFixed(2) : "N/A";
-    },
-    getEtatClass(pompe) {
-      // Logique pour définir l'état de la pompe
-      if (!pompe.enFonction) return "incident";
-      if (pompe.enUtilisation) return "utilisation";
-      return "enFonction";
-    }
+defineEmits(['aggrandir-pompe']);
+
+const pompes = ref<PompeData[]>([]);
+
+onMounted(async () => {
+  try {
+    pompes.value = await fetchPompes();
+  } catch (err) {
+    console.error("Erreur chargement mini pompes", err);
   }
-};
+});
 </script>
 
-<style>
-.liste-pompe {
-  display: flex;
-  overflow-x: auto;
-  gap: 10px;
-  padding: 10px;
-  height: calc(100% - 20px);
-  white-space: nowrap;
-}
-
-.liste-pompe .pompe {
-  background: var(--primary-color);
-  border: 2px solid var(--base-400);
-  border-radius: 10px;
-  padding: 10px;
+<style scoped>
+.liste-pompe-widget {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  gap: 5px;
-  width: 150px;
+  height: 100%;
+  background: #ffffff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
+.widget-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  cursor: pointer;
+}
 
-.liste-pompe .pompe-header {
+.widget-title {
   display: flex;
   align-items: center;
+  gap: 6px;
+}
+
+.widget-title h3 {
+  margin: 0;
+  font-size: 14px;
+  color: #1e293b;
+  font-weight: 700;
+}
+
+.btn-expand-badge {
+  font-size: 10px;
+  color: #2563eb;
+  background: #dbeafe;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.pompes-strip {
+  display: flex;
+  gap: 8px;
+  padding: 10px;
+  overflow-x: auto;
+  align-items: center;
+  flex: 1;
+  cursor: pointer;
+}
+
+.pompe-mini-pill {
+  flex: 1;
+  min-width: 70px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   justify-content: center;
-  gap: 5px;
+  padding: 8px 4px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  transition: transform 0.15s ease;
 }
 
-.liste-pompe .pompe-header h3 {
-  margin: 5px;
+.pompe-mini-pill:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
 }
 
-.liste-pompe .etat {
-  width: 20px;
-  height: 20px;
+.pompe-mini-pill.active { border-color: #86efac; background: #f0fdf4; }
+.pompe-mini-pill.in-use { border-color: #fde047; background: #fefce8; }
+.pompe-mini-pill.waiting-payment { border-color: #93c5fd; background: #eff6ff; }
+.pompe-mini-pill.incident { border-color: #fca5a5; background: #fef2f2; }
+
+.pill-top {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
 }
 
-.liste-pompe .etat.enFonction {
-  background-color: var(--accent-green);
-}
+.dot.active { background: #22c55e; }
+.dot.in-use { background: #eab308; }
+.dot.waiting-payment { background: #3b82f6; }
+.dot.incident { background: #ef4444; }
 
-.liste-pompe .etat.utilisation {
-  background-color: var(--accent-orange);
-}
-
-.liste-pompe .etat.incident {
-  background-color: var(--accent-red);
-}
-
-.liste-pompe .carburant {
-  flex-grow: 1;
-  font-weight: normal;
-
-}
-
-.liste-pompe .carburant ul {
-  padding: 0 20px;
-}
-
-.liste-pompe .utilisation {
+.pill-status-text {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  align-items: center;
+  font-size: 10px;
+  margin-top: 4px;
 }
 
-
-
-.liste-pompe button.arreter {
-  background-color: var(--accent-red);
-  color: var(--primary-color);
-}
-
-.liste-pompe button.incident {
-  background-color: var(--accent-orange);
-  color: white;
-}
+.txt-dispo { color: #166534; font-weight: 600; }
+.txt-use { color: #854d0e; font-weight: 700; }
+.txt-pay { color: #1e40af; font-weight: 700; }
+.txt-incident { color: #991b1b; font-weight: 700; }
 </style>

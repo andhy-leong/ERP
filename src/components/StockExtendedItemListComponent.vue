@@ -1,32 +1,40 @@
 <template>
   <div id="stock-extended-list-container">
+    <div class="list-head">
+      <h3>Inventaire Global</h3>
+      <span class="count-badge">{{ filteredItems.length }} articles</span>
+    </div>
 
-    <h3>🔋Stocks</h3>
-    <input type="text" id="stock-extended-search-bar" />
+    <input 
+      type="search" 
+      v-model="searchQuery" 
+      placeholder="Rechercher produit..." 
+      id="stock-extended-search-bar" 
+    />
 
     <div id="stock-extended-item-container">
       <p v-if="loading" class="stock-extended-center-message">Chargement...</p>
-      <p v-if="error" class="error stock-extended-center-message">{{ error }}</p>
-
-      <div v-if="items.length > 0">
+      <div v-else-if="filteredItems.length > 0">
         <StockExtendedItemListContentComponent
-            v-for="item in items"
-            :key="item.id"
-            :item="item"
-            @select="sendData"
+          v-for="item in filteredItems"
+          :key="item.idProduit"
+          :item="item"
+          @select="sendData"
         />
       </div>
+      <p v-else class="stock-extended-center-message">Aucun article trouvé</p>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, defineEmits } from 'vue';
+import { ref, computed, onMounted, defineEmits } from 'vue';
 import StockExtendedItemListContentComponent from "@/components/StockExtendedItemListContentComponent.vue";
+import { fetchProduits } from "@/services/erpService";
 
 const items = ref([]);
 const loading = ref(true);
-const error = ref(null);
+const searchQuery = ref('');
 
 const emit = defineEmits(['select']);
 
@@ -34,13 +42,24 @@ const sendData = (item) => {
   emit("select", item);
 };
 
+const filteredItems = computed(() => {
+  if (!searchQuery.value.trim()) return items.value;
+  const q = searchQuery.value.toLowerCase().trim();
+  return items.value.filter(i => 
+    i.nomProduit.toLowerCase().includes(q) ||
+    i.categorie?.toLowerCase().includes(q) ||
+    i.codeProduit?.toString().includes(q)
+  );
+});
+
 onMounted(async () => {
   try {
-    const response = await fetch("https://linserv-info-01/~pk203743/S401/fetchProduits.php");
-    items.value = await response.json();
-    console.log(items.value);
+    items.value = await fetchProduits();
+    if (items.value.length > 0) {
+      sendData(items.value[0]);
+    }
   } catch (err) {
-    error.value = err.message;
+    console.error("Erreur chargement stocks", err);
   } finally {
     loading.value = false;
   }
@@ -50,22 +69,56 @@ onMounted(async () => {
 <style scoped>
 #stock-extended-list-container {
   flex: 1;
-  background-color: #EDF0F7;
-  padding: 10px;
-  border: 2px solid black;
+  background-color: #ffffff;
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid #cbd5e1;
+  display: flex;
+  flex-direction: column;
 }
 
-.stock-extended-center-message {
-  justify-content: center;
-  align-content: center;
+.list-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
 }
 
-#stock-extended-item-container {
-  height: 100%;
+.list-head h3 {
+  margin: 0;
+  font-size: 15px;
+  color: #1e293b;
+}
+
+.count-badge {
+  font-size: 11px;
+  color: #64748b;
+  background: #f1f5f9;
+  padding: 2px 8px;
+  border-radius: 10px;
 }
 
 #stock-extended-search-bar {
   width: 100%;
-  margin-bottom: 20px;
+  padding: 8px 10px;
+  margin-bottom: 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+#stock-extended-item-container {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stock-extended-center-message {
+  text-align: center;
+  font-size: 12px;
+  color: #64748b;
+  padding: 20px;
 }
 </style>

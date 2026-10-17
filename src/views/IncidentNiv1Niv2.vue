@@ -4,7 +4,10 @@
       <!-- Panneau de gauche : Liste des incidents -->
       <div class="incidents-list-panel">
         <div class="incidents-header">
-          <h2>Incidents</h2>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <button type="button" @click="$emit('retour')" style="padding: 4px 8px; font-size: 11px; background: #e2e8f0; color: #1e293b; border-radius: 4px; cursor: pointer;">← Retour</button>
+            <h2>Incidents</h2>
+          </div>
           <div class="filter-icon" @click="toggleFilterMenu">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
@@ -329,34 +332,20 @@ const toggleIncidentStatus = async () => {
   const newStatus = !selectedIncident.value.status;
   
   try {
-    const response = await fetch('https://linserv-info-01/~rl303414/S401/updateIncidentStatus.php', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        idIncident: selectedIncident.value.idIncident,
-        status: newStatus ? 1 : 0
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const data = await response.json();
-    console.log('Réponse du serveur:', data);
-    
     selectedIncident.value.status = newStatus;
-    
-    if (newStatus && data.incident) {
-      selectedIncident.value.dateSolution = data.incident.dateSolution;
-      selectedIncident.value.heureSolution = data.incident.heureSolution;
+    if (newStatus) {
+      selectedIncident.value.dateSolution = new Date().toISOString().split('T')[0];
+      selectedIncident.value.heureSolution = new Date().toLocaleTimeString();
+    } else {
+      selectedIncident.value.dateSolution = null;
+      selectedIncident.value.heureSolution = null;
     }
+
+    await updateIncident(selectedIncident.value);
     
     const index = incidents.value.findIndex(inc => inc.idIncident === selectedIncident.value?.idIncident);
     if (index !== -1) {
-      incidents.value[index].status = newStatus;
+      incidents.value[index] = { ...selectedIncident.value };
     }
   } catch (error) {
     console.error('Erreur lors de la mise à jour du statut de l\'incident:', error);
